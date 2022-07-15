@@ -1,3 +1,5 @@
+use glib::StaticType;
+
 glib::wrapper! {
     pub struct TasbotEyesSink(ObjectSubclass<imp::TasbotEyesSink>) @extends gst_video::VideoSink, gst::Element, gst::Object;
 }
@@ -6,6 +8,15 @@ impl TasbotEyesSink {
     pub fn new(name: Option<&str>) -> Result<TasbotEyesSink, glib::BoolError> {
         glib::Object::new(&[("name", &name)])
     }
+}
+
+pub(crate) fn register(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {
+    gst::Element::register(
+        Some(plugin),
+        "tasboteyessink",
+        gst::Rank::None,
+        TasbotEyesSink::static_type(),
+    )
 }
 
 mod imp {

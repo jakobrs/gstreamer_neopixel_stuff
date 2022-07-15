@@ -1,3 +1,5 @@
+use glib::StaticType;
+
 glib::wrapper! {
     pub struct FpsCounter(ObjectSubclass<imp::FpsCounter>) @extends gst_base::BaseTransform, gst::Element, gst::Object;
 }
@@ -6,6 +8,15 @@ impl FpsCounter {
     pub fn new(name: Option<&str>) -> Result<FpsCounter, glib::BoolError> {
         glib::Object::new(&[("name", &name)])
     }
+}
+
+pub(crate) fn register(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {
+    gst::Element::register(
+        Some(plugin),
+        "fpscounter",
+        gst::Rank::None,
+        FpsCounter::static_type(),
+    )
 }
 
 mod imp {
@@ -47,9 +58,9 @@ mod imp {
         fn metadata() -> Option<&'static gst::subclass::ElementMetadata> {
             static ELEMENT_METADATA: Lazy<gst::subclass::ElementMetadata> = Lazy::new(|| {
                 gst::subclass::ElementMetadata::new(
-                    "TASBot Eyes Sink",
-                    "Video/Sink",
-                    "GStreamer sink for TASBot's eye display",
+                    "FPS",
+                    "Video/Filter",
+                    "Determines fps",
                     "me (someone@example.com)",
                 )
             });

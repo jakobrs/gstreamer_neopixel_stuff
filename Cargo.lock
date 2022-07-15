@@ -56,6 +56,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chrono"
+version = "0.4.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+dependencies = [
+ "libc",
+ "num-integer",
+ "num-traits",
+ "winapi",
+]
+
+[[package]]
 name = "clap"
 version = "3.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -209,6 +221,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gst-plugin-version-helper"
+version = "0.9.0"
+source = "git+https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs#5c5c15d36ad1e21b01ea52a4f2a8250029c099f6"
+dependencies = [
+ "chrono",
+]
+
+[[package]]
 name = "gstreamer"
 version = "0.18.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -310,6 +330,7 @@ dependencies = [
  "clap",
  "env_logger",
  "glib",
+ "gst-plugin-version-helper",
  "gstreamer",
  "gstreamer-base",
  "gstreamer-video",

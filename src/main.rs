@@ -2,8 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use gst::prelude::*;
 
-mod fps_counter;
-mod tasbot_eyes_sink;
+use gstneopixelstuff::{fps_counter::FpsCounter, tasbot_eyes_sink::TasbotEyesSink};
 
 #[derive(Parser)]
 struct Opts {
@@ -28,10 +27,10 @@ fn main() -> Result<()> {
     let videotestsrc = gst::ElementFactory::make("videotestsrc", None)?;
     let capsfilter = gst::ElementFactory::make("capsfilter", None)?;
     let gammafilter = gst::ElementFactory::make("gamma", None)?;
-    let fpscounter1 = fps_counter::FpsCounter::new(Some("fps_before_queue"))?;
+    let fpscounter1 = FpsCounter::new(Some("fps_before_queue"))?;
     let queue = gst::ElementFactory::make("queue", None)?;
-    let fpscounter2 = fps_counter::FpsCounter::new(Some("fps_after_queue"))?;
-    let tassink = tasbot_eyes_sink::TasbotEyesSink::new(None)?;
+    let fpscounter2 = FpsCounter::new(Some("fps_after_queue"))?;
+    let tassink = TasbotEyesSink::new(None)?;
 
     if let Some(target_fps) = opts.target_fps {
         capsfilter.set_property(
