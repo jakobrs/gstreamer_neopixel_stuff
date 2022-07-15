@@ -33,9 +33,20 @@ mod imp {
         buffer: Vec<u8>,
     }
 
-    #[derive(Default)]
     struct Settings {
         num_leds: usize,
+        bus: rppal::spi::Bus,
+        clock_speed: u32,
+    }
+
+    impl Default for Settings {
+        fn default() -> Self {
+            Self {
+                num_leds: 24,
+                bus: rppal::spi::Bus::Spi0,
+                clock_speed: 6_400_000,
+            }
+        }
     }
 
     #[derive(Default)]
@@ -53,11 +64,24 @@ mod imp {
 
     impl ObjectImpl for TasbotEyesSink {
         fn properties() -> &'static [glib::ParamSpec] {
-            static PROPERTIES: Lazy<[glib::ParamSpec; 1]> = Lazy::new(|| {
-                [glib::ParamSpecUInt64::builder("num-leds")
-                    .default_value(24)
-                    .minimum(1)
-                    .build()]
+            static PROPERTIES: Lazy<[glib::ParamSpec; 3]> = Lazy::new(|| {
+                [
+                    glib::ParamSpecUInt64::builder("num-leds")
+                        .blurb("Number of LEDs")
+                        .minimum(1)
+                        .default_value(24)
+                        .build(),
+                    glib::ParamSpecUInt::builder("bus")
+                        .blurb("SPI bus index")
+                        .minimum(0)
+                        .maximum(6)
+                        .default_value(0)
+                        .build(),
+                    glib::ParamSpecUInt::builder("clock-speed")
+                        .blurb("SPI clock speed")
+                        .default_value(6_400_000)
+                        .build(),
+                ]
             });
 
             &*PROPERTIES
@@ -76,6 +100,26 @@ mod imp {
 
                     settings.num_leds = value.get::<u64>().unwrap() as usize;
                 }
+                "bus" => {
+                    let mut settings = self.settings.lock().unwrap();
+
+                    use rppal::spi::Bus;
+                    settings.bus = match value.get::<u32>().unwrap() {
+                        0 => Bus::Spi0,
+                        1 => Bus::Spi1,
+                        2 => Bus::Spi2,
+                        3 => Bus::Spi3,
+                        4 => Bus::Spi4,
+                        5 => Bus::Spi5,
+                        6 => Bus::Spi6,
+                        _ => unimplemented!(),
+                    };
+                }
+                "clock-speed" => {
+                    let mut settings = self.settings.lock().unwrap();
+
+                    settings.clock_speed = value.get().unwrap();
+                }
                 _ => unimplemented!(),
             }
         }
@@ -91,6 +135,26 @@ mod imp {
                     let settings = self.settings.lock().unwrap();
 
                     (settings.num_leds as u64).to_value()
+                }
+                "bus" => {
+                    let settings = self.settings.lock().unwrap();
+
+                    use rppal::spi::Bus;
+                    match settings.bus {
+                        Bus::Spi0 => 0u32,
+                        Bus::Spi1 => 1,
+                        Bus::Spi2 => 2,
+                        Bus::Spi3 => 3,
+                        Bus::Spi4 => 4,
+                        Bus::Spi5 => 5,
+                        Bus::Spi6 => 6,
+                    }
+                    .to_value()
+                }
+                "clock-speed" => {
+                    let settings = self.settings.lock().unwrap();
+
+                    settings.clock_speed.to_value()
                 }
                 _ => unimplemented!(),
             }
@@ -134,12 +198,6 @@ mod imp {
     }
 
     impl BaseSinkImpl for TasbotEyesSink {
-        fn caps(&self, element: &Self::Type, filter: Option<&gst::Caps>) -> Option<gst::Caps> {
-            let result = self.parent_caps(element, filter);
-
-            result
-        }
-
         fn start(&self, element: &Self::Type) -> Result<(), gst::ErrorMessage> {
             let settings = self.settings.lock().unwrap();
             let mut state = self.state.lock().unwrap();
@@ -147,9 +205,9 @@ mod imp {
             let buffer = Vec::with_capacity(settings.num_leds * BITS_PER_BIT);
 
             let spi = Spi::new(
-                rppal::spi::Bus::Spi0,
+                settings.bus,
                 rppal::spi::SlaveSelect::Ss0,
-                6_400_000,
+                settings.clock_speed,
                 rppal::spi::Mode::Mode0,
             )
             .unwrap();
